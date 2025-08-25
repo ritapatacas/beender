@@ -79,19 +79,23 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
 # Results accordion
 # -----------------------------
 with st.expander("📊 Results", expanded=st.session_state.results_expanded):
-    logs_placeholder = st.empty()
     matches_placeholder = st.container()
+    logs_placeholder = st.empty()
 
-    if st.session_state.logs:
-        logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
-    
+    # Display matching frames first
     if st.session_state.matches:
         with matches_placeholder:
-            cols = st.columns(3)  # mostrar em grelha de 3 colunas
+            cols = st.columns(3)
             for i, (img, sec) in enumerate(st.session_state.matches):
                 with cols[i % 3]:
                     time_str = str(datetime.timedelta(seconds=int(sec)))
                     st.image(img, caption=f"t = {time_str}", use_container_width=True)
+
+    # Display logs at the bottom
+    if st.session_state.logs:
+        logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+
+
 
 # -----------------------------
 # Run process
@@ -122,22 +126,24 @@ if st.session_state.submitted:
                                 break
                             else:
                                 frame_data = json.loads(payload)
-
                                 frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
                                 img = Image.open(frame_bytes)
-
                                 second = frame_data['frame_index'] // skip
 
                                 st.session_state.matches.append((img, second))
                                 st.session_state.logs.append(f"✅ Match at {second}s (frame {frame_data['frame_index']})")
 
-                                # atualizar interface em tempo real
-                                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+                                # --- Update matches first ---
                                 with matches_placeholder:
                                     cols = st.columns(3)
                                     for i, (m_img, sec) in enumerate(st.session_state.matches):
                                         with cols[i % 3]:
-                                            st.image(m_img, caption=f"t = {sec}s", use_container_width=True)
+                                            time_str = str(datetime.timedelta(seconds=int(sec)))
+                                            st.image(m_img, caption=f"t = {time_str}", use_container_width=True)
+
+                                # --- Update logs at the bottom ---
+                                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+
 
     except Exception as e:
         st.error(f"❌ Failed to process stream: {e}")
