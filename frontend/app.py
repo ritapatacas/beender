@@ -39,6 +39,7 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
         )
     with col2:
         youtube_url = st.text_input(
+            "🎬 YouTube link",
             placeholder="youtube link",
             help="Paste the YouTube video link here"
         )
