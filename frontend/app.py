@@ -66,15 +66,28 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
             st.session_state.logs = []
             st.session_state.settings_expanded = False
             st.session_state.results_expanded = True
-            st.rerun()
+
+# -----------------------------
+# Results accordion
+# -----------------------------
+with st.expander("📊 Results", expanded=st.session_state.results_expanded):
+    logs_placeholder = st.empty()
+    matches_placeholder = st.container()
+
+    if st.session_state.logs:
+        logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+    if st.session_state.matches:
+        with matches_placeholder:
+            cols = st.columns(3)  # mostrar em grelha de 3 colunas
+            for i, (img, sec) in enumerate(st.session_state.matches):
+                with cols[i % 3]:
+                    st.image(img, caption=f"t = {sec}s", use_container_width=True)
 
 # -----------------------------
 # Run process
 # -----------------------------
 if st.session_state.submitted:
-    st.session_state.submitted = False
-
-    # convert face files to the format backend expects
+    # não desligamos submitted até terminar
     files = [('faces', (f.name, f.read(), f.type)) for f in face_files]
     data = {
         'youtube_url': youtube_url,
@@ -87,8 +100,7 @@ if st.session_state.submitted:
             if response.status_code != 200:
                 st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
             else:
-                st.success("✅ Processing started...")
-
+                st.session_state.logs.append("✅ Processing started...")
                 for line in response.iter_lines():
                     if line:
                         decoded = line.decode('utf-8')
@@ -100,26 +112,23 @@ if st.session_state.submitted:
                             else:
                                 frame_data = json.loads(payload)
 
-                                # Decode Base64 → image
                                 frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
                                 img = Image.open(frame_bytes)
 
-                                # Time in seconds
                                 second = frame_data['frame_index'] // skip
 
                                 st.session_state.matches.append((img, second))
                                 st.session_state.logs.append(f"✅ Match at {second}s (frame {frame_data['frame_index']})")
 
+                                # atualizar interface em tempo real
+                                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+                                with matches_placeholder:
+                                    cols = st.columns(3)
+                                    for i, (m_img, sec) in enumerate(st.session_state.matches):
+                                        with cols[i % 3]:
+                                            st.image(m_img, caption=f"t = {sec}s", use_container_width=True)
+
     except Exception as e:
         st.error(f"❌ Failed to process stream: {e}")
-
-# -----------------------------
-# Results accordion
-# -----------------------------
-with st.expander("📊 Results", expanded=st.session_state.results_expanded):
-    if st.session_state.logs:
-        st.text_area("Logs", "\n".join(st.session_state.logs), height=200)
-
-    if st.session_state.matches:
-        for img, sec in st.session_state.matches:
-            st.image(img, caption=f"Match at {sec}s", use_container_width=True, width=300)
+    finally:
+        st.session_state.submitted = False
