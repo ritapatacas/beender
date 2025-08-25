@@ -4,12 +4,12 @@ import json
 from PIL import Image
 from io import BytesIO
 import base64
+import datetime
 
 st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 
 st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; margin: 0;'>been there?</p>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.2em; font-style: bold; margin: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
 
 # -----------------------------
 # Init session state
@@ -31,11 +31,9 @@ if "results_expanded" not in st.session_state:
 with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded):
     backend_url = st.text_input(
         "🔗 Backend URL",
-        value="http://localhost:8000/process",
+        value="https://d4447fc0533a.ngrok-free.app/process",
         help="Enter the full URL of the backend API endpoint"
     )
-
-    st.write("Upload face images and a YouTube link.")
 
     face_files = st.file_uploader(
         "📸 Face images", 
@@ -49,6 +47,7 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
 
     youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/watch?v=...")
 
+    # sliders na mesma linha
     col1, col2 = st.columns(2)
     with col1:
         skip = st.slider("⏭️ Frame skip", min_value=1, max_value=200, value=30)
@@ -69,6 +68,7 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
             st.rerun()
 
 
+
 # -----------------------------
 # Results accordion
 # -----------------------------
@@ -78,12 +78,14 @@ with st.expander("📊 Results", expanded=st.session_state.results_expanded):
 
     if st.session_state.logs:
         logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+    
     if st.session_state.matches:
         with matches_placeholder:
             cols = st.columns(3)  # mostrar em grelha de 3 colunas
             for i, (img, sec) in enumerate(st.session_state.matches):
                 with cols[i % 3]:
-                    st.image(img, caption=f"t = {sec}s", use_container_width=True)
+                    time_str = str(datetime.timedelta(seconds=int(sec)))
+                    st.image(img, caption=f"t = {time_str}", use_container_width=True)
 
 # -----------------------------
 # Run process
