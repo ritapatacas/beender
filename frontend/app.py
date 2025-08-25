@@ -70,14 +70,11 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
     with col4:
         tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
-    # Buttons side by side
-    col_run, col_help = st.columns([3, 1])
-    with col_run:
-        run_clicked = st.button("🚀 RUN BEENDER", type="primary")
-    with col_help:
-        if st.button("❓ Help"):
-            st.session_state.show_help = True
-            st.rerun()
+    # Buttons
+    run_clicked = st.button("🚀 RUN BEENDER", type="primary")
+    if st.button("❓"):
+        st.session_state.show_help = True
+        st.rerun()
 
     # Handle RUN BEENDER button
     if run_clicked:
@@ -97,12 +94,11 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
 if st.session_state.show_help:
     with st.container():
         st.markdown("---")
-        st.markdown("### ❓ Help & Support")
+        st.markdown("### ❓ Help")
         
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.markdown("**📧 Contact for questions:**")
-            st.code("support@beender.app")
+            st.markdown("**📧 devritsa@gmail.com**")
             
             st.markdown("**🔗 Backend URL Configuration:**")
             help_backend_url = st.text_input(
