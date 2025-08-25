@@ -29,11 +29,19 @@ if "results_expanded" not in st.session_state:
 # Settings accordion
 # -----------------------------
 with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded):
-    backend_url = st.text_input(
-        "🔗 Backend URL",
-        value="https://d4447fc0533a.ngrok-free.app/process",
-        help="Enter the full URL of the backend API endpoint"
-    )
+    # Backend URL and YouTube URL side by side
+    col1, col2 = st.columns([2, 2])  # adjust widths if needed
+    with col1:
+        backend_url = st.text_input(
+            "🔗 Backend URL",
+            value="https://d4447fc0533a.ngrok-free.app",
+            help="Enter the full URL of the backend API endpoint"
+        )
+    with col2:
+        youtube_url = st.text_input(
+            placeholder="youtube link",
+            help="Paste the YouTube video link here"
+        )
 
     face_files = st.file_uploader(
         "📸 Face images", 
@@ -45,13 +53,10 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
         st.warning("⚠️ Maximum of 5 face images allowed.")
         face_files = face_files[:5]
 
-    youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/watch?v=...")
-
-    # sliders na mesma linha
-    col1, col2 = st.columns(2)
-    with col1:
+    col3, col4 = st.columns(2)
+    with col3:
         skip = st.slider("⏭️ Frame skip", min_value=1, max_value=200, value=30)
-    with col2:
+    with col4:
         tolerance = st.slider("🎯 Match tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
     if st.button("🚀 RUN BEENDER", type="primary"):
@@ -66,6 +71,7 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
             st.session_state.settings_expanded = False
             st.session_state.results_expanded = True
             st.rerun()
+
 
 
 
@@ -91,13 +97,14 @@ with st.expander("📊 Results", expanded=st.session_state.results_expanded):
 # Run process
 # -----------------------------
 if st.session_state.submitted:
-    # não desligamos submitted até terminar
     files = [('faces', (f.name, f.read(), f.type)) for f in face_files]
     data = {
         'youtube_url': youtube_url,
         'skip': skip,
         'tolerance': tolerance
     }
+    if not backend_url.endswith("/process"):
+        backend_url = backend_url.rstrip("/") + "/process"
 
     try:
         with requests.post(backend_url, files=files, data=data, stream=True) as response:
