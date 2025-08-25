@@ -15,36 +15,14 @@ st.markdown(
     .stMainBlockContainer.block-container {
         padding-top: 20px;
     }
-
-    /* Sliders lado a lado em telas ≥ 400px */
-    @media (min-width: 400px) {
-        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-            flex: 1 1 50% !important;
-            max-width: 50% !important;
-        }
-        [data-testid="stSlider"] > div {
-            max-width: 90% !important; /* evita sliders enormes */
-        }
-    }
-
-    /* Sliders empilham verticalmente em telas < 400px */
-    @media (max-width: 399px) {
-        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-            flex: 1 1 100% !important;
-            max-width: 100% !important;
-        }
-        [data-testid="stSlider"] > div {
-            max-width: 100% !important;
-        }
-    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
 
-st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; padding-bottom: 0;'>BEENDER</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
 
 # -----------------------------
 # Init session state
