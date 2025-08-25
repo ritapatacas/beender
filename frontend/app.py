@@ -15,14 +15,16 @@ st.markdown(
     .stMainBlockContainer.block-container {
         padding-top: 20px;
     }
+    
+    [data-testid="stColumns"] > div {
+        min-width: 200px;  /* enforce a min width */
+        flex-wrap: nowrap !important;  /* prevent wrapping */
+    }
     </style>
-    """,
-    unsafe_allow_html=True
-)
-
+""", unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; padding-bottom: 0;'>BEENDER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding-bottom: 10px;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
 
 # -----------------------------
 # Init session state
@@ -69,9 +71,9 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
 
     col3, col4 = st.columns(2)
     with col3:
-        skip = st.slider("⏭️ Frames", min_value=1, max_value=200, value=30)
+        skip = st.slider("🎞️ Frames", min_value=1, max_value=200, value=30)
     with col4:
-        tolerance = st.slider("🎯 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
+        tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
     if st.button("🚀 RUN BEENDER", type="primary"):
         if not face_files:
