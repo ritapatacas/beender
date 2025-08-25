@@ -66,6 +66,8 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
             st.session_state.logs = []
             st.session_state.settings_expanded = False
             st.session_state.results_expanded = True
+            st.rerun()
+
 
 # -----------------------------
 # Results accordion
