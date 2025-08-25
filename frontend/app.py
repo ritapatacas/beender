@@ -20,7 +20,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 st.markdown("<h1 style='text-align: center; padding-bottom: 0;'>BEENDER</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding-bottom: 10px;'>self stalking app - find yourself in a video</b></p>", unsafe_allow_html=True)
 
@@ -30,7 +29,7 @@ st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic;
 if "submitted" not in st.session_state:
     st.session_state.submitted = False
 if "matches" not in st.session_state:
-    st.session_state.matches = []
+    st.session_state.matches = []  # agora guarda (img, timecode)
 if "logs" not in st.session_state:
     st.session_state.logs = []
 if "settings_expanded" not in st.session_state:
@@ -44,10 +43,8 @@ if "show_help" not in st.session_state:
 # Settings accordion
 # -----------------------------
 with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded):
-    # Set backend URL as hardcoded value
     backend_url = "https://d4447fc0533a.ngrok-free.app"
     
-    # YouTube URL takes full width now
     youtube_url = st.text_input(
         "🎬 YouTube link",
         placeholder="youtube link",
@@ -70,13 +67,9 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
     with col4:
         tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
-    # Buttons
     run_clicked = st.button("🚀 RUN BEENDER", type="primary")
-    if st.button("❓"):
-        st.session_state.show_help = True
-        st.rerun()
 
-    # Handle RUN BEENDER button
+
     if run_clicked:
         if not face_files:
             st.error("⚠️ Please upload at least one face image.")
@@ -99,7 +92,6 @@ if st.session_state.show_help:
         col1, col2 = st.columns([3, 1])
         with col1:
             st.markdown("**📧 devritsa@gmail.com**")
-            
             st.markdown("**🔗 Backend URL Configuration:**")
             help_backend_url = st.text_input(
                 "Backend URL",
@@ -113,9 +105,6 @@ if st.session_state.show_help:
                 st.rerun()
         st.markdown("---")
 
-
-
-
 # -----------------------------
 # Results accordion
 # -----------------------------
@@ -123,19 +112,20 @@ with st.expander("📊 Results", expanded=st.session_state.results_expanded):
     matches_placeholder = st.container()
     logs_placeholder = st.empty()
 
-    # Display matching frames first
     if st.session_state.matches:
         with matches_placeholder:
             cols = st.columns(3)
-            for i, (img, sec) in enumerate(st.session_state.matches):
+            for i, (img, timecode) in enumerate(st.session_state.matches):
                 with cols[i % 3]:
-                    time_str = str(datetime.timedelta(seconds=int(sec)))
-                    st.image(img, caption=f"t = {time_str}", use_container_width=True)
+                    st.image(img, caption=f"t = {timecode}", use_container_width=True)
 
-    # Display logs at the bottom
     if st.session_state.logs:
         logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
 
+
+if st.button("❓"):
+    st.session_state.show_help = True
+    st.rerun()
 
 
 # -----------------------------
@@ -169,22 +159,20 @@ if st.session_state.submitted:
                                 frame_data = json.loads(payload)
                                 frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
                                 img = Image.open(frame_bytes)
-                                second = frame_data['frame_index'] // skip
+                                timecode = frame_data['timecode']
 
-                                st.session_state.matches.append((img, second))
-                                st.session_state.logs.append(f"✅ Match at {second}s (frame {frame_data['frame_index']})")
+                                st.session_state.matches.append((img, timecode))
+                                st.session_state.logs.append(
+                                    f"✅ Match at {timecode} (frame {frame_data['frame_index']})"
+                                )
 
-                                # --- Update matches first ---
                                 with matches_placeholder:
                                     cols = st.columns(3)
-                                    for i, (m_img, sec) in enumerate(st.session_state.matches):
+                                    for i, (m_img, tc) in enumerate(st.session_state.matches):
                                         with cols[i % 3]:
-                                            time_str = str(datetime.timedelta(seconds=int(sec)))
-                                            st.image(m_img, caption=f"t = {time_str}", use_container_width=True)
+                                            st.image(m_img, caption=f"t = {tc}", use_container_width=True)
 
-                                # --- Update logs at the bottom ---
                                 logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
-
 
     except Exception as e:
         st.error(f"❌ Failed to process stream: {e}")
