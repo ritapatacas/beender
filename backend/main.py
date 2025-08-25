@@ -8,10 +8,11 @@ import asyncio
 import face_recognition
 import numpy as np
 from fastapi.responses import StreamingResponse
-import cv2 
 import base64
 from PIL import Image
 import io
+from tqdm import tqdm
+import math
 
 app = FastAPI()
 
@@ -22,8 +23,16 @@ def log(msg: str):
     ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{ts}] {msg}", flush=True)
 
+
+
+def seconds_to_timecode(seconds: float) -> str:
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    return f"{hours:02}:{minutes:02}:{secs:06.3f}"  # hh:mm:ss.mmm
+
+
 async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: List[Path]):
-    # Carregar imagens de referência
     known_encodings = []
     for face_path in faces:
         img = face_recognition.load_image_file(face_path)
@@ -36,19 +45,15 @@ async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: Li
     log(f"Total de encodings carregados: {len(known_encodings)}")
 
     if not known_encodings:
-        log("⚠️ Nenhum encoding conhecido carregado, abortando.")
         yield f"data: {json.dumps({'error': 'no_known_faces'})}\n\n"
         return
 
-    # Obter URL direto do vídeo
-    log(f"Getting direct video URL for: {youtube_url}")
     direct_url = subprocess.run(
         ["yt-dlp", "-g", "-f", "best[ext=mp4]", youtube_url],
         capture_output=True,
         text=True
     ).stdout.strip()
 
-    # Mantém resolução original (sem scale)
     ffmpeg_cmd = [
         "ffmpeg",
         "-i", direct_url,
@@ -58,43 +63,46 @@ async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: Li
         "-"
     ]
 
-    log("Starting ffmpeg pipe...")
     process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=10**8)
 
     frame_index = 0
-    frame_bytes_accum = b""
-    width, height = None, None
+    width, height, fps = None, None, None
+    matches = []  # store matches with frame index + timecode
+
+    pbar = None
 
     while True:
-        # ⚠️ Primeiro precisamos saber o tamanho original do vídeo.
         if width is None or height is None:
-            # Extrair info de vídeo com ffprobe
             probe = subprocess.run(
                 ["ffprobe", "-v", "error", "-select_streams", "v:0",
-                 "-show_entries", "stream=width,height", "-of", "json", direct_url],
+                 "-show_entries", "stream=width,height,nb_frames,r_frame_rate",
+                 "-of", "json", direct_url],
                 capture_output=True, text=True
             )
             info = json.loads(probe.stdout)
             width = info["streams"][0]["width"]
             height = info["streams"][0]["height"]
-            log(f"Video resolution detected: {width}x{height}")
+
+            fps_str = info["streams"][0]["r_frame_rate"]  # ex: "25/1"
+            num, den = map(int, fps_str.split("/"))
+            fps = num / den
+
+            total_frames = int(info["streams"][0].get("nb_frames", 0)) or None
+            pbar = tqdm(total=total_frames, desc="Processing frames", unit="frame")
 
         raw_frame = process.stdout.read(width * height * 3)
         if len(raw_frame) < width * height * 3:
-            break  # fim do vídeo
+            break
 
         frame_index += 1
+        if pbar:
+            pbar.update(1)
 
         if frame_index % skip != 0:
-            continue  # salta frames conforme parâmetro skip
+            continue
 
         img = np.frombuffer(raw_frame, dtype=np.uint8).reshape((height, width, 3))
         encs = face_recognition.face_encodings(img)
-
-        if not encs:
-            log(f"No faces detected on frame {frame_index}")
-        else:
-            log(f"Detected {len(encs)} face(s) on frame {frame_index}")
 
         match_found = False
         for enc in encs:
@@ -104,9 +112,12 @@ async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: Li
                 break
 
         if match_found:
-            log(f"✅ Match found on frame {frame_index}")
+            time_seconds = frame_index / fps
+            timecode = seconds_to_timecode(time_seconds)
 
-            # Converter para JPEG em memória
+            print(f"✅ Match found on frame {frame_index} ({timecode})")
+            matches.append({"frame_index": frame_index, "timecode": timecode})
+
             buf = io.BytesIO()
             im = Image.fromarray(img)
             im.save(buf, format="JPEG")
@@ -114,26 +125,35 @@ async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: Li
 
             data = {
                 "frame_index": frame_index,
+                "timecode": timecode,
                 "frame_base64": frame_base64
             }
             yield f"data: {json.dumps(data)}\n\n"
 
-        if frame_index % 10 == 0:
-            log(f"Processed {frame_index} frames...")
-
         await asyncio.sleep(0.01)
 
+    if pbar:
+        pbar.close()
+
     log("Video processing done")
-    yield f"data: {json.dumps({'message': 'processing_done'})}\n\n"
+    print(f"\nTotal matches: {len(matches)}")
+    if matches:
+        print("Matches:")
+        for m in matches:
+            print(f"- Frame {m['frame_index']} @ {m['timecode']}")
+
+    yield f"data: {json.dumps({'message': 'processing_done', 'matches': matches})}\n\n"
+
+
 
 @app.post("/process")
 async def process_video(
     youtube_url: str = Form(...),
-    skip: int = Form(25),  # por default processa 1 frame/seg (≈25fps)
+    skip: int = Form(25),  # default 1 frame/sec
     tolerance: float = Form(0.5),
     faces: List[UploadFile] = File(None)
 ):
-    # Salvar faces localmente
+    # save faces locally
     face_paths = []
     if faces:
         face_dir = OUTPUT_DIR / "faces"
