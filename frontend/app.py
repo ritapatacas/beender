@@ -1,9 +1,12 @@
 import streamlit as st
 import requests
+import json
+from PIL import Image
+from io import BytesIO
 
-st.set_page_config(page_title="VEENDER", page_icon="🎥", layout="wide")
+st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 
-st.markdown("<h1 style='text-align: center;'>VEENDER</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-style: italic; margin: 0;'>been there?</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.2em; font-style: bold; margin: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
 
@@ -11,18 +14,12 @@ st.markdown("<p style='text-align: center; font-size: 1.2em; font-style: bold; m
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 
-# -----------------------------
-# Backend URL input
-# -----------------------------
 backend_url = st.text_input(
     "🔗 Backend URL",
     value="http://localhost:8000/process",
     help="Enter the full URL of the backend API endpoint"
 )
 
-# -----------------------------
-# Input section
-# -----------------------------
 st.write("Upload face images and a YouTube link.")
 
 face_files = st.file_uploader(
@@ -46,7 +43,7 @@ with col2:
 # -----------------------------
 # Submit to backend
 # -----------------------------
-if st.button("🚀 RUN VEENDER", type="primary"):
+if st.button("🚀 RUN BEENDER", type="primary"):
     if not face_files:
         st.error("⚠️ Please upload at least one face image.")
     elif not youtube_url:
@@ -55,25 +52,38 @@ if st.button("🚀 RUN VEENDER", type="primary"):
         st.session_state.submitted = True
 
 if st.session_state.submitted:
-    with st.spinner("🔄 Sending request to backend..."):
-        try:
-            files = [('faces', (f.name, f.read(), f.type)) for f in face_files]
-            data = {
-                'youtube_url': youtube_url,
-                'skip': skip,
-                'tolerance': tolerance
-            }
-            response = requests.post(backend_url, files=files, data=data)
+    st.session_state.submitted = False
+    stframe = st.empty()  # placeholder to render frames dynamically
 
-            if response.status_code == 200:
-                st.success("✅ Request submitted successfully!")
-                result = response.json()
-                st.json(result)
-            else:
+    # convert face files to the format backend expects
+    files = [('faces', (f.name, f.read(), f.type)) for f in face_files]
+    data = {
+        'youtube_url': youtube_url,
+        'skip': skip,
+        'tolerance': tolerance
+    }
+
+    # Use requests streaming for SSE
+    try:
+        with requests.post(backend_url, files=files, data=data, stream=True) as response:
+            if response.status_code != 200:
                 st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
+            else:
+                st.success("✅ Processing started...")
 
-        except Exception as e:
-            st.error(f"❌ Failed to send request: {e}")
-
-        finally:
-            st.session_state.submitted = False
+                for line in response.iter_lines():
+                    if line:
+                        decoded = line.decode('utf-8')
+                        if decoded.startswith("data:"):
+                            payload = decoded.replace("data:", "").strip()
+                            if payload == "DONE":
+                                st.info("🎉 Processing completed!")
+                                break
+                            else:
+                                # payload is expected to be base64-encoded frame image
+                                frame_data = json.loads(payload)
+                                frame_bytes = BytesIO(bytes(frame_data['image'], 'latin1'))
+                                img = Image.open(frame_bytes)
+                                stframe.image(img, caption=f"Frame {frame_data['frame']}", use_column_width=True)
+    except Exception as e:
+        st.error(f"❌ Failed to process stream: {e}")
