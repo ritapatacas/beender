@@ -3,6 +3,7 @@ import requests
 import json
 from PIL import Image
 from io import BytesIO
+import base64
 
 st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 
@@ -82,8 +83,12 @@ if st.session_state.submitted:
                             else:
                                 # payload is expected to be base64-encoded frame image
                                 frame_data = json.loads(payload)
-                                frame_bytes = BytesIO(bytes(frame_data['image'], 'latin1'))
+
+                                frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
+
+                                # abrir imagem
                                 img = Image.open(frame_bytes)
-                                stframe.image(img, caption=f"Frame {frame_data['frame']}", use_column_width=True)
+
+                                stframe.image(img, caption=f"Frame {frame_data['frame_index']}", use_column_width=True)
     except Exception as e:
         st.error(f"❌ Failed to process stream: {e}")
