@@ -8,6 +8,17 @@ import datetime
 
 st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 
+st.markdown(
+    """
+    <style>
+    .stMainBlockContainer.block-container {
+        padding-top: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
 
