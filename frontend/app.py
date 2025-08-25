@@ -11,27 +11,29 @@ st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 st.markdown(
     """
     <style>
+    /* Reduz padding top do main container */
     .stMainBlockContainer.block-container {
         padding-top: 20px;
     }
 
-
+    /* Sliders lado a lado em telas ≥ 400px */
     @media (min-width: 400px) {
-        .stColumns > .stColumn {
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
             flex: 1 1 50% !important;
             max-width: 50% !important;
         }
-        .stSlider > div {
-            max-width: 90% !important; /* evita sliders gigantes */
+        [data-testid="stSlider"] > div {
+            max-width: 90% !important; /* evita sliders enormes */
         }
     }
 
+    /* Sliders empilham verticalmente em telas < 400px */
     @media (max-width: 399px) {
-        .stColumns > .stColumn {
+        [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
             flex: 1 1 100% !important;
             max-width: 100% !important;
         }
-        .stSlider > div {
+        [data-testid="stSlider"] > div {
             max-width: 100% !important;
         }
     }
@@ -89,9 +91,9 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
 
     col3, col4 = st.columns(2)
     with col3:
-        skip = st.slider("⏭️ Frame skip", min_value=1, max_value=200, value=30)
+        skip = st.slider("⏭️ Frames", min_value=1, max_value=200, value=30)
     with col4:
-        tolerance = st.slider("🎯 Match tolerance", min_value=0.1, max_value=1.0, value=0.5)
+        tolerance = st.slider("🎯 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
     if st.button("🚀 RUN BEENDER", type="primary"):
         if not face_files:
