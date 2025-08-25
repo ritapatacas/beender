@@ -1,0 +1,25 @@
+# ================================================
+#   VEENDER - Video Face Finder | Configuration
+# ================================================
+
+# Frames
+# Number of frames to skip when processing the video.
+# Lower = more frames processed (more precise, slower)
+# Higher = fewer frames processed (faster, less precise)
+# Recommended range: 1 - 300
+frame_skip: 30
+
+# Face recognition
+# Tolerance for face matching.
+# Lower = stricter matching (fewer false positives)
+# Higher = more permissive (may include false positives)
+# Recommended range: 0.3 - 0.7
+tolerance: 0.5
+
+# Output
+# Base folder for storing results (frames + logs)
+output_dir: "data/output"
+
+# Input directories
+faces_dir: "data/input/faces"
+videos_dir: "data/input/videos"
