@@ -15,16 +15,14 @@ st.markdown(
     .stMainBlockContainer.block-container {
         padding-top: 20px;
     }
-    
-    [data-testid="stColumns"] > div {
-        min-width: 200px;  /* enforce a min width */
-        flex-wrap: nowrap !important;  /* prevent wrapping */
-    }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
+
 
 st.markdown("<h1 style='text-align: center; padding-bottom: 0;'>BEENDER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding-bottom: 10px;'>self stalker - find yourself in a video</b></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic; margin: 0; padding-bottom: 10px;'>self stalking app - find yourself in a video</b></p>", unsafe_allow_html=True)
 
 # -----------------------------
 # Init session state
@@ -39,25 +37,22 @@ if "settings_expanded" not in st.session_state:
     st.session_state.settings_expanded = True
 if "results_expanded" not in st.session_state:
     st.session_state.results_expanded = False
+if "show_help" not in st.session_state:
+    st.session_state.show_help = False
 
 # -----------------------------
 # Settings accordion
 # -----------------------------
 with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded):
-    # Backend URL and YouTube URL side by side
-    col1, col2 = st.columns([2, 2])  # adjust widths if needed
-    with col1:
-        backend_url = st.text_input(
-            "🔗 Backend URL",
-            value="https://d4447fc0533a.ngrok-free.app",
-            help="Enter the full URL of the backend API endpoint"
-        )
-    with col2:
-        youtube_url = st.text_input(
-            "🎬 YouTube link",
-            placeholder="youtube link",
-            help="Paste the YouTube video link here"
-        )
+    # Set backend URL as hardcoded value
+    backend_url = "https://d4447fc0533a.ngrok-free.app"
+    
+    # YouTube URL takes full width now
+    youtube_url = st.text_input(
+        "🎬 YouTube link",
+        placeholder="youtube link",
+        help="Paste the YouTube video link here"
+    )
 
     face_files = st.file_uploader(
         "📸 Face images", 
@@ -75,7 +70,17 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
     with col4:
         tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
 
-    if st.button("🚀 RUN BEENDER", type="primary"):
+    # Buttons side by side
+    col_run, col_help = st.columns([3, 1])
+    with col_run:
+        run_clicked = st.button("🚀 RUN BEENDER", type="primary")
+    with col_help:
+        if st.button("❓ Help"):
+            st.session_state.show_help = True
+            st.rerun()
+
+    # Handle RUN BEENDER button
+    if run_clicked:
         if not face_files:
             st.error("⚠️ Please upload at least one face image.")
         elif not youtube_url:
@@ -87,6 +92,30 @@ with st.expander("⚙️ Settings", expanded=st.session_state.settings_expanded)
             st.session_state.settings_expanded = False
             st.session_state.results_expanded = True
             st.rerun()
+
+# Help popup dialog
+if st.session_state.show_help:
+    with st.container():
+        st.markdown("---")
+        st.markdown("### ❓ Help & Support")
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("**📧 Contact for questions:**")
+            st.code("support@beender.app")
+            
+            st.markdown("**🔗 Backend URL Configuration:**")
+            help_backend_url = st.text_input(
+                "Backend URL",
+                value="https://d4447fc0533a.ngrok-free.app",
+                help="Enter the full URL of the backend API endpoint",
+                key="help_backend_url"
+            )
+        with col2:
+            if st.button("✖️ Close Help"):
+                st.session_state.show_help = False
+                st.rerun()
+        st.markdown("---")
 
 
 
