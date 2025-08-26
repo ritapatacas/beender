@@ -73,15 +73,24 @@ async def stream_frames(youtube_url: str, skip: int, tolerance: float, faces: Li
 
     while True:
         if width is None or height is None:
+
             probe = subprocess.run(
                 ["ffprobe", "-v", "error", "-select_streams", "v:0",
-                 "-show_entries", "stream=width,height,nb_frames,r_frame_rate",
-                 "-of", "json", direct_url],
+                "-show_entries", "stream=width,height,nb_frames,r_frame_rate",
+                "-of", "json", direct_url],
                 capture_output=True, text=True
             )
-            info = json.loads(probe.stdout)
+
+            info = json.loads(probe.stdout or "{}")
+
+            if "streams" not in info or not info["streams"]:
+                log(f"❌ ffprobe failed for URL: {direct_url}")
+                yield f"data: {json.dumps({'error': 'ffprobe_failed'})}\n\n"
+                return
+
             width = info["streams"][0]["width"]
             height = info["streams"][0]["height"]
+
 
             fps_str = info["streams"][0]["r_frame_rate"]  # ex: "25/1"
             num, den = map(int, fps_str.split("/"))
