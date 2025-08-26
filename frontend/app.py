@@ -66,32 +66,22 @@ st.markdown("""
             .custom-btn:hover {
             background-color: #2a2a2a;
             }
+
         </style>
     """, unsafe_allow_html=True)
 
-def arrow_link(label: str, target_step: int, direction: str = "next", color: str = "default"):
+def arrow_link(label: str, target_step: int, direction: str = "next"):
     # Usar símbolos Unicode para as setas
     arrow_symbol = "→" if direction == "next" else "←"
     
-    # CSS para esconder a borda do formulário e estilizar botões vermelhos
-    st.markdown(f"""
+    # CSS para esconder a borda do formulário
+    st.markdown("""
     <style>
-    .stForm {{
+    .stForm {
         border: none !important;
         background: none !important;
         padding: 0 !important;
-    }}
-    
-    /* Estilo para botão vermelho baseado na chave do formulário */
-    [data-testid="stForm"] div[data-testid*="arrow-form-{target_step}"] button {{
-        background-color: {'#ff4444' if color == 'red' else 'default'} !important;
-        color: {'white' if color == 'red' else 'default'} !important;
-        border: none !important;
-    }}
-    [data-testid="stForm"] div[data-testid*="arrow-form-{target_step}"] button:hover {{
-        background-color: {'#cc3333' if color == 'red' else 'default'} !important;
-        color: {'white' if color == 'red' else 'default'} !important;
-    }}
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -104,7 +94,48 @@ def arrow_link(label: str, target_step: int, direction: str = "next", color: str
         else:
             button_text = f"{arrow_symbol} {label}"
         
-        # Usar sempre o mesmo tipo de botão (sem containers extras)
+        submitted = st.form_submit_button(button_text, use_container_width=True)
+            
+        if submitted:
+            st.session_state.step = target_step
+            st.rerun()
+
+
+def run_link(label: str, target_step: int, direction: str = "next"):
+    # Usar símbolos Unicode para as setas
+    arrow_symbol = "→" if direction == "next" else "←"
+    
+    # CSS para esconder a borda do formulário e estilizar botão vermelho
+    st.markdown(f"""
+    <style>
+    .stForm {{
+        border: none !important;
+        background: none !important;
+        padding: 0 !important;
+    }}
+    
+    .st-key-FormSubmitter-run-form-3-RUN-- button {{
+        background-color: #ff4444 !important;
+        color: white !important;
+        border: none !important;
+    }}
+
+    .st-key-FormSubmitter-run-form-3-RUN-- button:hover {{
+        background-color: #cc3333 !important;
+        color: white !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Usar um form para que o clique seja processado pelo Streamlit
+    form_key = f"run-form-{target_step}"
+    with st.form(form_key):
+        # Incluir o ícone no texto do botão
+        if direction == "next":
+            button_text = f"{label} {arrow_symbol}"
+        else:
+            button_text = f"{arrow_symbol} {label}"
+        
         submitted = st.form_submit_button(button_text, use_container_width=True)
             
         if submitted:
@@ -166,7 +197,7 @@ elif st.session_state.step == 2:
     with col1:
         arrow_link("Back", target_step=1, direction="back")
     with col2:
-        arrow_link("RUN", target_step=3, direction="next", color="red")
+        run_link("RUN", target_step=3, direction="next")
 
     if youtube_url:
         st.session_state.youtube_url = youtube_url
