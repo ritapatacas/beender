@@ -4,7 +4,7 @@ import json
 from PIL import Image
 from io import BytesIO
 import base64
-import datetime
+import time
 
 st.set_page_config(page_title="BEENDER", page_icon="🎥", layout="wide")
 
@@ -109,6 +109,7 @@ if st.session_state.show_help:
 # Results accordion
 # -----------------------------
 with st.expander("📊 Results", expanded=st.session_state.results_expanded):
+    
     matches_placeholder = st.container()
     logs_placeholder = st.empty()
 
@@ -131,6 +132,7 @@ if st.button("❓"):
 # -----------------------------
 # Run process
 # -----------------------------
+
 if st.session_state.submitted:
     files = [('faces', (f.name, f.read(), f.type)) for f in face_files]
     data = {
@@ -141,40 +143,53 @@ if st.session_state.submitted:
     if not backend_url.endswith("/process"):
         backend_url = backend_url.rstrip("/") + "/process"
 
-    try:
-        with requests.post(backend_url, files=files, data=data, stream=True) as response:
-            if response.status_code != 200:
-                st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
+    max_retries = 3
+    attempt = 0
+    success = False
+
+    while attempt < max_retries and not success:
+        attempt += 1
+        try:
+            with requests.post(backend_url, files=files, data=data, stream=True, timeout=120) as response:
+                if response.status_code != 200:
+                    st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
+                else:
+                    st.session_state.logs.append(f"✅ Processing started... (attempt {attempt})")
+                    for line in response.iter_lines():
+                        if line:
+                            decoded = line.decode('utf-8')
+                            if decoded.startswith("data:"):
+                                payload = decoded.replace("data:", "").strip()
+                                if payload == "DONE":
+                                    st.session_state.logs.append("🎉 Processing completed!")
+                                    success = True
+                                    break
+                                else:
+                                    frame_data = json.loads(payload)
+                                    frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
+                                    img = Image.open(frame_bytes)
+                                    timecode = frame_data['timecode']
+
+                                    st.session_state.matches.append((img, timecode))
+                                    st.session_state.logs.append(
+                                        f"✅ Match at {timecode} (frame {frame_data['frame_index']})"
+                                    )
+
+                                    with matches_placeholder:
+                                        cols = st.columns(3)
+                                        for i, (m_img, tc) in enumerate(st.session_state.matches):
+                                            with cols[i % 3]:
+                                                st.image(m_img, caption=f"t = {tc}", use_container_width=True)
+
+                                    logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+
+        except Exception as e:
+            st.session_state.logs.append(f"⚠️ Attempt {attempt} failed: {e}")
+            if attempt < max_retries:
+                st.session_state.logs.append("🔄 Retrying in 3 seconds...")
+                time.sleep(3)
             else:
-                st.session_state.logs.append("✅ Processing started...")
-                for line in response.iter_lines():
-                    if line:
-                        decoded = line.decode('utf-8')
-                        if decoded.startswith("data:"):
-                            payload = decoded.replace("data:", "").strip()
-                            if payload == "DONE":
-                                st.session_state.logs.append("🎉 Processing completed!")
-                                break
-                            else:
-                                frame_data = json.loads(payload)
-                                frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
-                                img = Image.open(frame_bytes)
-                                timecode = frame_data['timecode']
-
-                                st.session_state.matches.append((img, timecode))
-                                st.session_state.logs.append(
-                                    f"✅ Match at {timecode} (frame {frame_data['frame_index']})"
-                                )
-
-                                with matches_placeholder:
-                                    cols = st.columns(3)
-                                    for i, (m_img, tc) in enumerate(st.session_state.matches):
-                                        with cols[i % 3]:
-                                            st.image(m_img, caption=f"t = {tc}", use_container_width=True)
-
-                                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
-
-    except Exception as e:
-        st.error(f"❌ Failed to process stream: {e}")
-    finally:
-        st.session_state.submitted = False
+                st.error(f"❌ Failed after {max_retries} attempts: {e}")
+        finally:
+            if success or attempt == max_retries:
+                st.session_state.submitted = False
