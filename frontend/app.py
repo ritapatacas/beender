@@ -40,6 +40,10 @@ st.markdown("""
             margin: 0;
             }
 
+            .stMainBlockContainer.block-container.st-emotion-cache-zy6yx3.e4man114 {
+                padding-bottom: 0 !important;
+            }
+
             .material-symbols-rounded {
             font-variation-settings:
             'FILL' 0,
@@ -66,14 +70,63 @@ st.markdown("""
             .custom-btn:hover {
             background-color: #2a2a2a;
             }
-            .st-emotion-cache-j9nanm.e52wr8w2 .st-emotion-cache-r44huj.e1hznt4w0 p {
+
+            .st-key-selfie-container {
+                padding-right: 16px!important;
+            }
+
+            .st-key-popover-container,
+            .st-key-settings-container {
+                padding-right: 16px!important;
+            }
+
+            div:has(> .st-key-smth) {
+                height: 45vh !important;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .st-key-smth > [data-testid="stLayoutWrapper"] {
+                display: flex !important;           /* make the wrapper a flex container */
+                flex-direction: column !important;  /* stack children vertically */
+                justify-content: space-between !important; /* distribute children evenly */
+                height: 100% !important;            /* fill the parent height */
+                min-height: 0;                       /* prevent overflow issues */
+            }
+
+
+            .st-emotion-cache-1weic72.e1gk92lc0 {
+                height: auto !important;   /* reset any fixed height */
+                min-height: 0 !important;  /* allow it to shrink if needed */
+                padding: 0 !important;     /* remove extra spacing */
+            }
+
+
+
+
+            .st-key-selfie-container > .stElementContainer:first-of-type p {
                 display: none !important;
             }
+            
             
             .st-emotion-cache-14503gc {
                 display: none !important;
             }
-            
+
+            .st-key-file_uploader [data-testid="stMarkdownContainer"] > p {
+                display: none !important;
+            }
+
+
+            .st-key-file_uploader .st-emotion-cache-u8hs99.eamlidg1 > span {
+               display: none !important;
+            }
+
+            /* hide the "Limit 200MB per file • JPG, JPEG, PNG" text */
+            .st-key-file_uploader .st-emotion-cache-b1errp.eamlidg4 {
+                display: none !important;
+            }
+                        
             .stVerticalBlock.st-emotion-cache-10km526.e52wr8w2 {
                 gap: 0 !important;
             }
@@ -257,7 +310,7 @@ def start_link(label: str, target_step: int, direction: str = "next"):
 # Step 0 – Start
 # -----------------------------
 if st.session_state.step == 0:
-    with st.container(border=None, height=300, vertical_alignment="center"):
+    with st.container(key="smth", border=None, vertical_alignment="center"):
         st.markdown("<p style='text-align: center; font-size: 1.8em; font-style: bold; padding-bottom: 1.5em; font-weight: 600;'>a self stalking app</p>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; font-size: 1.2em; font-style: italic;'>have you been there? <br> find yourself in a youtube video</p>", unsafe_allow_html=True)
 
@@ -277,79 +330,86 @@ elif st.session_state.step == 1:
         st.session_state.face_files = []
     
     # Content Container
-    with st.container(height=300):
-        st.subheader("1. GIVE ME YOUR FACE", divider="gray")
+    with st.container(key="smth", border=True):
+        st.subheader("1. SHOW ME YOUR FACE", divider="gray")
         
-        # File uploader
-        uploaded_files = st.file_uploader(
-            "**📸 upload or take a selfie**",
-            type=["jpg","jpeg","png"],
-            accept_multiple_files=True,
-            key="file_uploader"
-        )
-        
-        # Update face_files with uploaded files
-        if uploaded_files:
-            # Combine uploaded files with existing camera photos, but limit to 5 total
-            total_files = list(uploaded_files) + [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]
-            if len(total_files) > 5:
-                st.warning("⚠️ Maximum of 5 face images allowed.")
-                total_files = total_files[:5]
-            st.session_state.face_files = total_files
-
-
-        with st.container(horizontal_alignment="center", border=None, gap=None):
-            # st.markdown("<center style='margin-bottom: 25px; font-weight: bold;' >OR</center>", unsafe_allow_html=True)
-            @st.dialog("Take a selfie")
-            def take_selfie():
-                enable = st.checkbox("Enable camera")
-                picture = st.camera_input("Take a picture", disabled=not enable)
-
-
-                    
-                if st.button("Submit", disabled=not picture):
-                    if picture:
-                        # Create a file-like object for the camera photo
-                        picture._camera_photo = True  # Mark as camera photo
-                        picture.name = f"camera_selfie_{len([f for f in st.session_state.face_files if hasattr(f, '_camera_photo')])}.jpg"
-                        
-                        # Add to face_files list
-                        current_files = [f for f in st.session_state.face_files if not hasattr(f, '_camera_photo')]  # Keep uploaded files
-                        camera_files = [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]  # Keep existing camera files
-                        camera_files.append(picture)
-                        
-                        # Combine and limit to 5
-                        total_files = current_files + camera_files
-                        if len(total_files) > 5:
-                            st.warning("⚠️ Maximum of 5 face images allowed.")
-                            total_files = total_files[:5]
-                        
-                        st.session_state.face_files = total_files
-                        st.rerun()
-
-            # Display current face files count
-            current_count = len(st.session_state.face_files) if st.session_state.face_files else 0
-            remaining_slots = max(0, 5 - current_count)
+        with st.container(key="step1-container", border=None, vertical_alignment="distribute"):
+            # File uploader
+            uploaded_files = st.file_uploader(
+                "📸 Upload your photo",
+                type=["jpg","jpeg","png"],
+                accept_multiple_files=True,
+                key="file_uploader"
+            )
             
-            if remaining_slots > 0:
-                st.write(f"📷 Take a selfie ({current_count}/5 images)")
-                if st.button("Take a selfie"):
-                    take_selfie()
-            else:
-                st.info("✅ Maximum number of images reached (5/5)")
+            # Update face_files with uploaded files
+            if uploaded_files:
+                # Combine uploaded files with existing camera photos, but limit to 5 total
+                total_files = list(uploaded_files) + [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]
+                if len(total_files) > 5:
+                    st.warning("⚠️ Maximum of 5 face images allowed.")
+                    total_files = total_files[:5]
+                st.session_state.face_files = total_files
+
+
+            with st.container(horizontal_alignment="right", border=None, gap=None, key="selfie-container"):
+                # st.markdown("<center style='margin-bottom: 25px; font-weight: bold;' >OR</center>", unsafe_allow_html=True)
+                @st.dialog("Take a selfie")
+                def take_selfie():
+                    enable = st.checkbox("Enable camera")
+                    picture = st.camera_input("Take a picture", disabled=not enable)
+
+
+                        
+                    if st.button("Submit", disabled=not picture):
+                        if picture:
+                            # Create a file-like object for the camera photo
+                            picture._camera_photo = True  # Mark as camera photo
+                            picture.name = f"camera_selfie_{len([f for f in st.session_state.face_files if hasattr(f, '_camera_photo')])}.jpg"
+                            
+                            # Add to face_files list
+                            current_files = [f for f in st.session_state.face_files if not hasattr(f, '_camera_photo')]  # Keep uploaded files
+                            camera_files = [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]  # Keep existing camera files
+                            camera_files.append(picture)
+                            
+                            # Combine and limit to 5
+                            total_files = current_files + camera_files
+                            if len(total_files) > 5:
+                                st.warning("⚠️ Maximum of 5 face images allowed.")
+                                total_files = total_files[:5]
+                            
+                            st.session_state.face_files = total_files
+                            st.rerun()
+
+                # Display current face files count
+                current_count = len(st.session_state.face_files) if st.session_state.face_files else 0
+                remaining_slots = max(0, 5 - current_count)
+                
+                if remaining_slots > 0:
+                    st.write(f"📷 Take a selfie ({current_count}/5 images)")
+                    if st.button("Take a selfie"):
+                        take_selfie()
+                else:
+                    st.info("✅ Maximum number of images reached (5/5)")
+
+            # CHECK IMAGES popover - positioned at bottom right
+            # Instead of container, use columns or empty space
             
-            # Display current images
             if st.session_state.face_files and current_count > 0:
-                with st.popover("check images"):
-                    st.write("Current images:")
-                    cols = st.columns(min(len(st.session_state.face_files), 5))
-                    for i, file in enumerate(st.session_state.face_files):
-                        with cols[i]:
-                            try:
-                                image = Image.open(file)
-                                st.image(image, caption=f"{file.name}", use_container_width=True)
-                            except Exception as e:
-                                st.error(f"Error displaying {file.name}")
+                with st.container(horizontal=True, key="popover-container", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
+                    with st.popover("👀", use_container_width=None):
+                        st.write("Current images:")
+                        cols = st.columns(min(len(st.session_state.face_files), 5))
+                        for i, file in enumerate(st.session_state.face_files):
+                            with cols[i]:
+                                try:
+                                    image = Image.open(file)
+                                    st.image(image, caption=f"{file.name}", use_container_width=True)
+                                except Exception as e:
+                                    st.error(f"Error displaying {file.name}")
+            else:
+                st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+
 
     with st.container(width="stretch"):
         arrow_link(["Back", 0], ["Next", 2])
@@ -360,21 +420,23 @@ elif st.session_state.step == 1:
 # -----------------------------
 elif st.session_state.step == 2:
     # Content Container
-    with st.container(height=300):
+    with st.container(key="smth", border=True):
         st.subheader("2. VIDEO TO STALK", divider="gray")
-        youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
+        
+        with st.container(key="step2-container", border=None):
+            youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
 
-        # SETTINGS popover
-        with st.container(horizontal=True, height="stretch", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
-            if st.button("⚙️", use_container_width=None):
-                with st.expander("Advanced settings"):
-                    skip = st.slider("🎞️ Frame skip", min_value=1, max_value=200, value=30)
-                    tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
-                    st.session_state.skip = skip
-                    st.session_state.tolerance = tolerance
+            # SETTINGS popover
+            with st.container(horizontal=True, key="settings-container", height="stretch", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
+                if st.button("⚙️", use_container_width=None):
+                    with st.expander("Advanced settings"):
+                        skip = st.slider("🎞️ Frame skip", min_value=1, max_value=200, value=30)
+                        tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
+                        st.session_state.skip = skip
+                        st.session_state.tolerance = tolerance
 
-        if youtube_url:
-            st.session_state.youtube_url = youtube_url
+            if youtube_url:
+                st.session_state.youtube_url = youtube_url
 
     # Navigation Container  
     with st.container():
@@ -384,77 +446,90 @@ elif st.session_state.step == 2:
 # Step 3 – Processing & Results
 # -----------------------------
 elif st.session_state.step == 3:
-    st.subheader("Step 3 – Processing your video...")
-    matches_placeholder = st.container()
-    logs_placeholder = st.empty()
+    # Auto-trigger processing when entering step 3
+    if not st.session_state.submitted and "youtube_url" in st.session_state:
+        st.session_state.submitted = True
+        st.rerun()
+    
+    # Content Container
+    with st.container(key="smth", border=True):
+        st.subheader("3. PROCESSING & RESULTS", divider="gray")
+        
+        with st.container(key="step3-container", border=None):
+            matches_placeholder = st.container()
+            logs_placeholder = st.empty()
 
-    if st.session_state.matches:
-        with matches_placeholder:
-            cols = st.columns(3)
-            for i, (img, timecode) in enumerate(st.session_state.matches):
-                with cols[i % 3]:
-                    st.image(img, caption=f"t = {timecode}", use_container_width=None, width=100)
+            if st.session_state.matches:
+                with matches_placeholder:
+                    cols = st.columns(3)
+                    for i, (img, timecode) in enumerate(st.session_state.matches):
+                        with cols[i % 3]:
+                            st.image(img, caption=f"t = {timecode}", use_container_width=None, width=100)
 
-    if st.session_state.logs:
-        logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+            if st.session_state.logs:
+                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
 
-    if st.session_state.submitted:
-        files = [('faces', (f.name, f.read(), f.type)) for f in st.session_state.face_files]
-        data = {
-            'youtube_url': st.session_state.youtube_url,
-            'skip': st.session_state.skip,
-            'tolerance': st.session_state.tolerance
-        }
-        if not backend_url.endswith("/process"):
-            backend_url = backend_url.rstrip("/") + "/process"
+            if st.session_state.submitted:
+                files = [('faces', (f.name, f.read(), f.type)) for f in st.session_state.face_files]
+                data = {
+                    'youtube_url': st.session_state.youtube_url,
+                    'skip': st.session_state.skip,
+                    'tolerance': st.session_state.tolerance
+                }
+                if not backend_url.endswith("/process"):
+                    backend_url = backend_url.rstrip("/") + "/process"
 
-        max_retries = 3
-        attempt = 0
-        success = False
+                max_retries = 3
+                attempt = 0
+                success = False
 
-        while attempt < max_retries and not success:
-            attempt += 1
-            try:
-                with requests.post(backend_url, files=files, data=data, stream=True, timeout=120) as response:
-                    if response.status_code != 200:
-                        st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
-                    else:
-                        st.session_state.logs.append(f"✅ Processing started... (attempt {attempt})")
-                        for line in response.iter_lines():
-                            if line:
-                                decoded = line.decode('utf-8')
-                                if decoded.startswith("data:"):
-                                    payload = decoded.replace("data:", "").strip()
-                                    if payload == "DONE":
-                                        st.session_state.logs.append("🎉 Processing completed!")
-                                        success = True
-                                        break
-                                    else:
-                                        frame_data = json.loads(payload)
-                                        frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
-                                        img = Image.open(frame_bytes)
-                                        timecode = frame_data['timecode']
+                while attempt < max_retries and not success:
+                    attempt += 1
+                    try:
+                        with requests.post(backend_url, files=files, data=data, stream=True, timeout=120) as response:
+                            if response.status_code != 200:
+                                st.error(f"❌ Backend returned error {response.status_code}: {response.text}")
+                            else:
+                                st.session_state.logs.append(f"✅ Processing started... (attempt {attempt})")
+                                for line in response.iter_lines():
+                                    if line:
+                                        decoded = line.decode('utf-8')
+                                        if decoded.startswith("data:"):
+                                            payload = decoded.replace("data:", "").strip()
+                                            if payload == "DONE":
+                                                st.session_state.logs.append("🎉 Processing completed!")
+                                                success = True
+                                                break
+                                            else:
+                                                frame_data = json.loads(payload)
+                                                frame_bytes = BytesIO(base64.b64decode(frame_data['frame_base64']))
+                                                img = Image.open(frame_bytes)
+                                                timecode = frame_data['timecode']
 
-                                        st.session_state.matches.append((img, timecode))
-                                        st.session_state.logs.append(
-                                            f"✅ Match at {timecode} (frame {frame_data['frame_index']})"
-                                        )
+                                                st.session_state.matches.append((img, timecode))
+                                                st.session_state.logs.append(
+                                                    f"✅ Match at {timecode} (frame {frame_data['frame_index']})"
+                                                )
 
-                                        with matches_placeholder:
-                                            cols = st.columns(3)
-                                            for i, (m_img, tc) in enumerate(st.session_state.matches):
-                                                with cols[i % 3]:
-                                                    st.image(m_img, caption=f"t = {tc}", use_container_width=None, width=100)
+                                                with matches_placeholder:
+                                                    cols = st.columns(3)
+                                                    for i, (m_img, tc) in enumerate(st.session_state.matches):
+                                                        with cols[i % 3]:
+                                                            st.image(m_img, caption=f"t = {tc}", use_container_width=None, width=100)
 
-                                        logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
+                                                logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
 
-            except Exception as e:
-                st.session_state.logs.append(f"⚠️ Attempt {attempt} failed: {e}")
-                if attempt < max_retries:
-                    st.session_state.logs.append("🔄 Retrying in 3 seconds...")
-                    time.sleep(3)
-                else:
-                    st.error(f"❌ Failed after {max_retries} attempts: {e}")
-            finally:
-                if success or attempt == max_retries:
-                    st.session_state.submitted = False
+                    except Exception as e:
+                        st.session_state.logs.append(f"⚠️ Attempt {attempt} failed: {e}")
+                        if attempt < max_retries:
+                            st.session_state.logs.append("🔄 Retrying in 3 seconds...")
+                            time.sleep(3)
+                        else:
+                            st.error(f"❌ Failed after {max_retries} attempts: {e}")
+                    finally:
+                        if success or attempt == max_retries:
+                            st.session_state.submitted = False
+
+    # Navigation Container
+    with st.container():
+        arrow_link(["Back", 2], ["Start Over", 0])
