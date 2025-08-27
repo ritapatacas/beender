@@ -25,10 +25,10 @@ if "show_help" not in st.session_state:
 backend_url = "https://d4447fc0533a.ngrok-free.app"
 
 # -----------------------------
-# Title
+# Title Container
 # -----------------------------
-st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.1em; font-style: italic;'>self stalking app - find yourself in a video</p>", unsafe_allow_html=True)
+with st.container():
+    st.markdown("<h1 style='text-align: center;'>BEENDER</h1>", unsafe_allow_html=True)
 
 # -----------------------------
 # Arrow-link helper
@@ -66,66 +66,120 @@ st.markdown("""
             .custom-btn:hover {
             background-color: #2a2a2a;
             }
+            .st-emotion-cache-j9nanm.e52wr8w2 .st-emotion-cache-r44huj.e1hznt4w0 p {
+                display: none !important;
+            }
+            
+            .st-emotion-cache-14503gc {
+                display: none !important;
+            }
+            
+            .stVerticalBlock.st-emotion-cache-10km526.e52wr8w2 {
+                gap: 0 !important;
+            }
+
+            .stPopover.st-emotion-cache-8atqhb.e1mlolmg0 button {
+                text-size-adjust: 80% !important;
+                height: 80% !important;
+                border: none;
+
+            }
+            .stPopover.st-emotion-cache-8atqhb.e1mlolmg0 {
+                display: flex;
+                
+            }
+
+            
+            /* Estilo para botão tertiary verde */
+            button[kind="tertiary"] {
+                background-color: #28a745 !important;
+                color: white !important;
+                border: 1px solid #28a745 !important;
+                font-weight: 600 !important;
+            }
+            
+            button[kind="tertiary"]:hover {
+                background-color: #218838 !important;
+                color: white !important;
+                border: 1px solid #218838 !important;
+            }
+            
+            button[kind="tertiary"]:focus {
+                background-color: #218838 !important;
+                color: white !important;
+                box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3) !important;
+            }
 
         </style>
     """, unsafe_allow_html=True)
 
-def arrow_link(label: str, target_step: int, direction: str = "next"):
-    # Usar símbolos Unicode para as setas
-    arrow_symbol = "→" if direction == "next" else "←"
+def arrow_link(button1_config: list, button2_config: list):
+    """
+    Cria dois botões lado a lado usando container horizontal
+    button1_config: [label, target_step] para o botão da esquerda
+    button2_config: [label, target_step] para o botão da direita
+    """
     
-    # CSS para esconder a borda do formulário
-    st.markdown("""
-    <style>
-    .stForm {
-        border: none !important;
-        background: none !important;
-        padding: 0 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
-    # Usar um form para que o clique seja processado pelo Streamlit
-    form_key = f"arrow-form-{target_step}"
-    with st.form(form_key):
-        # Incluir o ícone no texto do botão
-        if direction == "next":
-            button_text = f"{label} {arrow_symbol}"
-        else:
-            button_text = f"{arrow_symbol} {label}"
-        
-        submitted = st.form_submit_button(button_text, use_container_width=True)
-            
-        if submitted:
-            st.session_state.step = target_step
-            st.rerun()
+    # Container horizontal para os dois botões
+    flex = st.container(horizontal=True, height="stretch", width="stretch")
+    
+    # Botão 1 (Back)
+    label1, target_step1 = button1_config
+    button_text1 = f"← {label1}"
+    key1 = f"back-{target_step1}-{st.session_state.step}"
+    
+    if flex.button(button_text1, key=key1, use_container_width=True):
+        st.session_state.step = target_step1
+        st.rerun()
+    
+    # Botão 2 (Next/Run)
+    label2, target_step2 = button2_config
+    button_text2 = f"{label2} →"
+    key2 = f"next-{target_step2}-{st.session_state.step}"
+    type = "secondary"
+    
+    # Aplicar key especial para botão RUN (para CSS)
+    if label2 == "RUN":
+        key2 = f"run-button-{target_step2}"
+        type = "primary"
+    
+    if flex.button(button_text2, key=key2, use_container_width=True, type=type):
+        st.session_state.step = target_step2
+        st.rerun()
 
 
 def run_link(label: str, target_step: int, direction: str = "next"):
     # Usar símbolos Unicode para as setas
     arrow_symbol = "→" if direction == "next" else "←"
     
-    # CSS para esconder a borda do formulário e estilizar botão vermelho
+    # CSS para esconder a borda do formulário, botão vermelho e min-width
     st.markdown(f"""
-    <style>
-    .stForm {{
-        border: none !important;
-        background: none !important;
-        padding: 0 !important;
-    }}
-    
-    .st-key-FormSubmitter-run-form-3-RUN-- button {{
-        background-color: #ff4444 !important;
-        color: white !important;
-        border: none !important;
-    }}
+        <style>
+            .stForm {{
+                border: none !important;
+                background: none !important;
+                padding: 0 !important;
+            }}
+            
+            /* Garantir que as colunas não se empilhem em mobile */
+            [data-testid="column"] {{
+                min-width: 120px !important;
+                flex: 0 0 auto !important;
+            }}
+            
+            .st-key-FormSubmitter-run-form-3-RUN-- button {{
+                background-color: #ff4444 !important;
+                color: white !important;
+                border: none !important;
+            }}
 
-    .st-key-FormSubmitter-run-form-3-RUN-- button:hover {{
-        background-color: #cc3333 !important;
-        color: white !important;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+            .st-key-FormSubmitter-run-form-3-RUN-- button:hover {{
+                background-color: #cc3333 !important;
+                color: white !important;
+            }}
+        </style>
+        """, unsafe_allow_html=True)
     
     # Usar um form para que o clique seja processado pelo Streamlit
     form_key = f"run-form-{target_step}"
@@ -136,11 +190,64 @@ def run_link(label: str, target_step: int, direction: str = "next"):
         else:
             button_text = f"{arrow_symbol} {label}"
         
-        submitted = st.form_submit_button(button_text, use_container_width=True)
+        submitted = st.form_submit_button(button_text, use_container_width=None, width=120)
             
         if submitted:
             st.session_state.step = target_step
             st.rerun()
+
+
+def start_link(label: str, target_step: int, direction: str = "next"):
+    # Usar símbolos Unicode para as setas
+    arrow_symbol = "→" if direction == "next" else "←"
+    
+    # CSS para esconder a borda do formulário e garantir min-width
+    st.markdown("""
+    <style>
+    .stForm {
+        border: none !important;
+        background: none !important;
+        padding: 0 !important;
+    }
+    
+    .st-emotion-cache-wfksaw {
+        flex-direction: column !important;
+        align-items: flex-end;
+    }
+
+    /* Garantir que as colunas não se empilhem em mobile */
+    [data-testid="column"] {
+        min-width: 120px !important;
+    }
+    
+    /* Container flexível para alinhamento à direita */
+    .start-button-container {
+        display: flex !important;
+        justify-content: flex-end !important;
+        width: 100% !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Container com flexbox para alinhar à direita
+    st.markdown('<div class="start-button-container">', unsafe_allow_html=True)
+    
+    # Usar um form para que o clique seja processado pelo Streamlit
+    form_key = f"start-form-{target_step}"
+    with st.form(form_key, width="stretch"):
+        # Incluir o ícone no texto do botão
+        if direction == "next":
+            button_text = f"{label} {arrow_symbol}"
+        else:
+            button_text = f"{arrow_symbol} {label}"
+        
+        submitted = st.form_submit_button(button_text, use_container_width=None, width="stretch")
+            
+        if submitted:
+            st.session_state.step = target_step
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 
@@ -150,57 +257,128 @@ def run_link(label: str, target_step: int, direction: str = "next"):
 # Step 0 – Start
 # -----------------------------
 if st.session_state.step == 0:
-    st.subheader("Step 0 – Start")
-    st.markdown("Click START to begin face detection in your video.")
-    arrow_link("START", target_step=1, direction="next")
+    with st.container(border=None, height=300, vertical_alignment="center"):
+        st.markdown("<p style='text-align: center; font-size: 1.8em; font-style: bold; padding-bottom: 1.5em; font-weight: 600;'>a self stalking app</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size: 1.2em; font-style: italic;'>have you been there? <br> find yourself in a youtube video</p>", unsafe_allow_html=True)
+
+    
+    with st.container():
+        if st.button("START →", type="tertiary", use_container_width=True, key="start-button-0"):
+            st.session_state.step = 1
+            st.rerun()
 
 
 # -----------------------------
 # Step 1 – Upload faces
 # -----------------------------
 elif st.session_state.step == 1:
-    st.subheader("Step 1 – Upload your face images")
-    face_files = st.file_uploader(
-        "📸 Upload up to 5 face images",
-        type=["jpg","jpeg","png"],
-        accept_multiple_files=True
-    )
-    if face_files and len(face_files) > 5:
-        st.warning("⚠️ Maximum of 5 face images allowed.")
-        face_files = face_files[:5]
+    # Initialize face_files in session state if not exists
+    if "face_files" not in st.session_state:
+        st.session_state.face_files = []
     
-    col1, col2 = st.columns(2)
-    with col1:
-        arrow_link("Back", target_step=0, direction="back")
-    with col2:
-        arrow_link("Next", target_step=2, direction="next")
+    # Content Container
+    with st.container(height=300):
+        st.subheader("1. GIVE ME YOUR FACE", divider="gray")
+        
+        # File uploader
+        uploaded_files = st.file_uploader(
+            "**📸 upload or take a selfie**",
+            type=["jpg","jpeg","png"],
+            accept_multiple_files=True,
+            key="file_uploader"
+        )
+        
+        # Update face_files with uploaded files
+        if uploaded_files:
+            # Combine uploaded files with existing camera photos, but limit to 5 total
+            total_files = list(uploaded_files) + [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]
+            if len(total_files) > 5:
+                st.warning("⚠️ Maximum of 5 face images allowed.")
+                total_files = total_files[:5]
+            st.session_state.face_files = total_files
 
-    if face_files:
-        st.session_state.face_files = face_files
+
+        with st.container(horizontal_alignment="center", border=None, gap=None):
+            # st.markdown("<center style='margin-bottom: 25px; font-weight: bold;' >OR</center>", unsafe_allow_html=True)
+            @st.dialog("Take a selfie")
+            def take_selfie():
+                enable = st.checkbox("Enable camera")
+                picture = st.camera_input("Take a picture", disabled=not enable)
+
+
+                    
+                if st.button("Submit", disabled=not picture):
+                    if picture:
+                        # Create a file-like object for the camera photo
+                        picture._camera_photo = True  # Mark as camera photo
+                        picture.name = f"camera_selfie_{len([f for f in st.session_state.face_files if hasattr(f, '_camera_photo')])}.jpg"
+                        
+                        # Add to face_files list
+                        current_files = [f for f in st.session_state.face_files if not hasattr(f, '_camera_photo')]  # Keep uploaded files
+                        camera_files = [f for f in st.session_state.face_files if hasattr(f, '_camera_photo')]  # Keep existing camera files
+                        camera_files.append(picture)
+                        
+                        # Combine and limit to 5
+                        total_files = current_files + camera_files
+                        if len(total_files) > 5:
+                            st.warning("⚠️ Maximum of 5 face images allowed.")
+                            total_files = total_files[:5]
+                        
+                        st.session_state.face_files = total_files
+                        st.rerun()
+
+            # Display current face files count
+            current_count = len(st.session_state.face_files) if st.session_state.face_files else 0
+            remaining_slots = max(0, 5 - current_count)
+            
+            if remaining_slots > 0:
+                st.write(f"📷 Take a selfie ({current_count}/5 images)")
+                if st.button("Take a selfie"):
+                    take_selfie()
+            else:
+                st.info("✅ Maximum number of images reached (5/5)")
+            
+            # Display current images
+            if st.session_state.face_files and current_count > 0:
+                with st.popover("check images"):
+                    st.write("Current images:")
+                    cols = st.columns(min(len(st.session_state.face_files), 5))
+                    for i, file in enumerate(st.session_state.face_files):
+                        with cols[i]:
+                            try:
+                                image = Image.open(file)
+                                st.image(image, caption=f"{file.name}", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"Error displaying {file.name}")
+
+    with st.container(width="stretch"):
+        arrow_link(["Back", 0], ["Next", 2])
+
 
 # -----------------------------
-# Step 2 – YouTube URL + SETTINGS
+# Step 2 – YouTube URL
 # -----------------------------
 elif st.session_state.step == 2:
-    st.subheader("Step 2 – Provide the YouTube video")
-    youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
+    # Content Container
+    with st.container(height=300):
+        st.subheader("2. VIDEO TO STALK", divider="gray")
+        youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
 
-    # SETTINGS popover
-    if st.button("⚙️ SETTINGS"):
-        with st.expander("Advanced settings"):
-            skip = st.slider("🎞️ Frame skip", min_value=1, max_value=200, value=30)
-            tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
-            st.session_state.skip = skip
-            st.session_state.tolerance = tolerance
+        # SETTINGS popover
+        with st.container(horizontal=True, height="stretch", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
+            if st.button("⚙️", use_container_width=None):
+                with st.expander("Advanced settings"):
+                    skip = st.slider("🎞️ Frame skip", min_value=1, max_value=200, value=30)
+                    tolerance = st.slider("📈 Tolerance", min_value=0.1, max_value=1.0, value=0.5)
+                    st.session_state.skip = skip
+                    st.session_state.tolerance = tolerance
 
-    col1, col2 = st.columns(2)
-    with col1:
-        arrow_link("Back", target_step=1, direction="back")
-    with col2:
-        run_link("RUN", target_step=3, direction="next")
+        if youtube_url:
+            st.session_state.youtube_url = youtube_url
 
-    if youtube_url:
-        st.session_state.youtube_url = youtube_url
+    # Navigation Container  
+    with st.container():
+        arrow_link(["Back", 1], ["RUN", 3])  # RUN substitui NEXT
 
 # -----------------------------
 # Step 3 – Processing & Results
@@ -215,7 +393,7 @@ elif st.session_state.step == 3:
             cols = st.columns(3)
             for i, (img, timecode) in enumerate(st.session_state.matches):
                 with cols[i % 3]:
-                    st.image(img, caption=f"t = {timecode}", use_container_width=True)
+                    st.image(img, caption=f"t = {timecode}", use_container_width=None, width=100)
 
     if st.session_state.logs:
         logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
@@ -266,7 +444,7 @@ elif st.session_state.step == 3:
                                             cols = st.columns(3)
                                             for i, (m_img, tc) in enumerate(st.session_state.matches):
                                                 with cols[i % 3]:
-                                                    st.image(m_img, caption=f"t = {tc}", use_container_width=True)
+                                                    st.image(m_img, caption=f"t = {tc}", use_container_width=None, width=100)
 
                                         logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
 
