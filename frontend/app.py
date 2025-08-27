@@ -424,25 +424,12 @@ elif st.session_state.step == 1:
                                 try:
                                     file.seek(0)
                                     image = Image.open(file)
-                                    
-                                    # Crop image to square (center crop)
-                                    width, height = image.size
-                                    size = min(width, height)
-                                    left = (width - size) // 2
-                                    top = (height - size) // 2
-                                    right = left + size
-                                    bottom = top + size
-                                    
-                                    # Crop the image to square
-                                    cropped_image = image.crop((left, top, right, bottom))
-                                    
                                     st.image(
-                                        cropped_image,
-                                        width=150,
-                                        use_container_width=False
+                                        image,
+                                        use_container_width=True
                                     )
                                     # Add remove button below each image
-                                    if st.button(f"✖️", key=f"remove_{i}", use_container_width=True):
+                                    if st.button(f"❌", key=f"remove_{i}", use_container_width=True):
                                         # Remove the file at index i
                                         st.session_state.face_files.pop(i)
                                         st.rerun()
@@ -462,8 +449,45 @@ elif st.session_state.step == 2:
     with st.container(key="smth", border=True):
         st.subheader("2. VIDEO TO STALK", divider="gray")
         
-        with st.container(key="step2-container", border=None):
-            youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
+        with st.container(key="step2-container", border=None, height="stretch"):
+            # Create two columns
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                youtube_url = st.text_input("🎬 YouTube link", placeholder="https://youtube.com/...")
+
+            with col2:
+                # Display YouTube widget when URL is entered
+                if youtube_url:
+                    # Extract video ID from YouTube URL
+                    if "youtube.com/watch?v=" in youtube_url:
+                        video_id = youtube_url.split("v=")[1].split("&")[0]
+                    elif "youtu.be/" in youtube_url:
+                        video_id = youtube_url.split("youtu.be/")[1].split("?")[0]
+                    else:
+                        video_id = None
+                    
+                    if video_id:
+                        # Create YouTube embed widget
+                        st.markdown(
+                            f"""
+                            <div style="width: 100%; height: 200px;">
+                                <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    src="https://www.youtube.com/embed/{video_id}" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        st.warning("Please enter a valid YouTube URL")
+                else:
+                    st.write("")
 
             # SETTINGS popover
             with st.container(horizontal=True, key="settings-container", height="stretch", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
@@ -509,7 +533,13 @@ elif st.session_state.step == 3:
                 logs_placeholder.text_area("Logs", "\n".join(st.session_state.logs), height=200)
 
             if st.session_state.submitted:
-                files = [('faces', (f.name, f.read(), f.type)) for f in st.session_state.face_files]
+                # Create files list without reading content - let backend handle file reading
+                files = []
+                for f in st.session_state.face_files:
+                    # Reset file pointer to beginning
+                    f.seek(0)
+                    files.append(('faces', (f.name, f, f.type)))
+                
                 data = {
                     'youtube_url': st.session_state.youtube_url,
                     'skip': st.session_state.skip,
