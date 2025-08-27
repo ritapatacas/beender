@@ -33,6 +33,26 @@ with st.container():
 # -----------------------------
 # Arrow-link helper
 # -----------------------------
+
+st.markdown(
+    """
+    <style>
+    /* 1. Hide the uploaded files list dynamically */
+    .st-emotion-cache-fis6aj {
+        display: none !important;
+    }
+
+    /* 2. Remove height of "Drag and drop files here" label */
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        height: auto !important;
+        min-height: 0 !important;
+        line-height: normal !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
         <style>
@@ -75,8 +95,7 @@ st.markdown("""
                 padding-right: 16px!important;
             }
 
-            .st-key-popover-container,
-            .st-key-settings-container {
+            .st-key-popover-container {
                 padding-right: 16px!important;
             }
 
@@ -393,24 +412,44 @@ elif st.session_state.step == 1:
                     st.info("✅ Maximum number of images reached (5/5)")
 
             # CHECK IMAGES popover - positioned at bottom right
-            # Instead of container, use columns or empty space
-            
             if st.session_state.face_files and current_count > 0:
                 with st.container(horizontal=True, key="popover-container", width="stretch", horizontal_alignment="right", vertical_alignment="bottom"):
-                    with st.popover("👀", use_container_width=None):
-                        st.write("Current images:")
-                        cols = st.columns(min(len(st.session_state.face_files), 5))
+                    with st.popover("👀", use_container_width=False, width="content"):
+                        n_images = len(st.session_state.face_files)
+                        max_cols = min(n_images, 5)
+                        cols = st.columns(max_cols, gap="small")
+
                         for i, file in enumerate(st.session_state.face_files):
                             with cols[i]:
                                 try:
+                                    file.seek(0)
                                     image = Image.open(file)
-                                    st.image(image, caption=f"{file.name}", use_container_width=True)
+                                    
+                                    # Crop image to square (center crop)
+                                    width, height = image.size
+                                    size = min(width, height)
+                                    left = (width - size) // 2
+                                    top = (height - size) // 2
+                                    right = left + size
+                                    bottom = top + size
+                                    
+                                    # Crop the image to square
+                                    cropped_image = image.crop((left, top, right, bottom))
+                                    
+                                    st.image(
+                                        cropped_image,
+                                        width=150,
+                                        use_container_width=False
+                                    )
+                                    # Add remove button below each image
+                                    if st.button(f"✖️", key=f"remove_{i}", use_container_width=True):
+                                        # Remove the file at index i
+                                        st.session_state.face_files.pop(i)
+                                        st.rerun()
                                 except Exception as e:
-                                    st.error(f"Error displaying {file.name}")
+                                    st.error(f"Error loading image: {e}")
             else:
-                st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-
-
+                st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)            
     with st.container(width="stretch"):
         arrow_link(["Back", 0], ["Next", 2])
 
