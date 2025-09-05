@@ -69,7 +69,6 @@ def process_image(image_path, ref_encodings, ref_names, tolerance, output_dir):
 
     return matches
 
-
 def process_video(video_path, ref_encodings, ref_names, frame_skip, tolerance, output_dir):
     """Process a video and search for reference faces."""
     cap = cv2.VideoCapture(video_path)
@@ -120,9 +119,9 @@ def process_video(video_path, ref_encodings, ref_names, frame_skip, tolerance, o
 # ========================
 def main():
     parser = argparse.ArgumentParser(description="Find faces in images/videos")
-    parser.add_argument("--faces", type=str, default="/input/faces",
+    parser.add_argument("--faces", type=str, default="input/faces",
                         help="Path to reference faces directory")
-    parser.add_argument("--footage", type=str, default="/input/footage",
+    parser.add_argument("--footage", type=str, default="input/footage",
                         help="Path to footage directory")
     parser.add_argument("--skip", type=int, default=30,
                         help="Process 1 frame every N frames for videos")
@@ -133,11 +132,9 @@ def main():
 
     args = parser.parse_args()
 
-    # Load reference faces
-    ref_encodings, ref_names = load_reference_faces(args.faces_path)
+    ref_encodings, ref_names = load_reference_faces(args.faces)
 
-    # Process all files in footage_path
-    files = glob.glob(os.path.join(args.footage_path, "*"))
+    files = glob.glob(os.path.join(args.footage, "*"))
     if not files:
         print("[ERROR] No files found in footage directory.")
         sys.exit(1)
