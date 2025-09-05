@@ -22,6 +22,19 @@ if "logs" not in st.session_state:
 if "show_help" not in st.session_state:
     st.session_state.show_help = False
 
+if "skip" not in st.session_state:
+    st.session_state.skip = 30  # valor padrão
+if "tolerance" not in st.session_state:
+    st.session_state.tolerance = 0.5  # valor padrão
+if "face_files" not in st.session_state:
+    st.session_state.face_files = []
+if "progress_percent" not in st.session_state:
+    st.session_state.progress_percent = 0
+if "total_frames" not in st.session_state:
+    st.session_state.total_frames = 0
+if "youtube_url" not in st.session_state:
+    st.session_state.youtube_url = ""
+
 backend_url = "https://d4447fc0533a.ngrok-free.app"
 
 # -----------------------------
