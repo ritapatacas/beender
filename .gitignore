@@ -1,3 +1,8 @@
 */__pycache__
 backend/output
 backend/venv_backend
+tumo-script/venv_backend
+.DS_Store
+
+*.mp4
+*.png
